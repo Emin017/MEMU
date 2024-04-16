@@ -40,8 +40,7 @@ pub fn exu_cycle() void {
     } else if (ebreak) {
         if (c.cpu.gprs[10] == 0) {
             const out: u8 = @intCast(c.cpu.gprs[11] & 0xff);
-            const str = std.fmt.digitToChar(@intCast(out - 'A' + 10), std.fmt.Case.upper);
-            print("{c}" ++ "\n", .{str});
+            print("{c}" ++ "\n", .{out});
         } else if (c.cpu.gprs[10] == 1) {
             halt = true;
         } else {
