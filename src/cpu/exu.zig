@@ -10,7 +10,7 @@
 
 const std = @import("std");
 
-const M = @import("../mem.zig").MEM.M;
+const M = @import("../mem.zig").MEM;
 const c = @import("cpu.zig");
 const Decode = @import("decode.zig").Decode;
 const decode = @import("decode.zig").decode_operand;
@@ -21,7 +21,7 @@ const ifu = @import("ifu.zig");
 var halt = false;
 
 pub fn exu_cycle() void {
-    const inst: u32 = ifu.inst_fetch(c.cpu.pc, &M);
+    const inst: u32 = ifu.inst_fetch(c.cpu.pc, &M.memory);
     var s: Decode = undefined;
     s.inst = inst;
     var dest: word_t = undefined;
@@ -40,7 +40,7 @@ pub fn exu_cycle() void {
     } else if (ebreak) {
         if (c.cpu.gprs[10] == 0) {
             const out: u8 = @intCast(c.cpu.gprs[11] & 0xff);
-            print("{c}" ++ "\n", .{out});
+            print("{c}", .{out});
         } else if (c.cpu.gprs[10] == 1) {
             halt = true;
         } else {

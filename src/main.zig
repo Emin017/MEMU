@@ -11,12 +11,16 @@
 const std = @import("std");
 const c = @import("cpu/cpu.zig");
 const halt = @import("cpu/exu.zig").isHalt;
+const initMemory = @import("mem.zig").initMem;
 
 pub const reg_display = @import("cpu/reg.zig").reg_display;
 pub const inst_cycle = @import("cpu/exu.zig").exu_cycle;
 
+comptime {}
+
 pub fn main() void {
     c.cpu.pc = 0;
+    initMemory();
     while (!halt()) {
         inst_cycle();
         c.cpu.pc += 4;
