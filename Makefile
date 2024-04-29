@@ -8,7 +8,10 @@
 # MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 # See the Mulan PSL v2 for more details.
 
+IMG_DIR ?= src/imgfile
+
 run:
+	$(MAKE) -C $(IMG_DIR) compile
 	zig run src/main.zig
 
 decode:
