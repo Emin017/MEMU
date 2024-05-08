@@ -37,3 +37,4 @@ clean:
 	rm -rf $(BUILD_DIR)/ zig-cache/
 
 .default: build
+.PHONY: build test-img run test decode ifu fmt clean
