@@ -1,3 +1,7 @@
+# zig build output
+zig-out/
+zig-cache/
+
 ctags
 cscope.out
 

@@ -9,9 +9,19 @@
 # See the Mulan PSL v2 for more details.
 
 IMG_DIR ?= src/imgfile
+BUILD_DIR ?= zig-out
+BIN_DIR ?= $(BUILD_DIR)/bin
 
-run:
+build:
+	zig build
+
+test-img:
 	$(MAKE) -C $(IMG_DIR) compile
+
+run: build test-img
+	$(BIN_DIR)/memu
+
+test: test-img
 	zig run src/main.zig
 
 decode:
@@ -23,3 +33,7 @@ ifu:
 fmt:
 	zig fmt src/*.zig
 
+clean:
+	rm -rf $(BUILD_DIR)/ zig-cache/
+
+.default: build
