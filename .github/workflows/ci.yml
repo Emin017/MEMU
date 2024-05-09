@@ -20,4 +20,5 @@ jobs:
         uses: korandoru/setup-zig@v1
         with:
           zig-version: ${{ matrix.zig }}
+      - run: make test-img
       - run: zig build
