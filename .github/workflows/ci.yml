@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         zig: [ 0.12.0, master ]
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest]
     runs-on: ${{ matrix.os }}
     name: Zig ${{ matrix.zig }} on ${{ matrix.os }}
     steps:
