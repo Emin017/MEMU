@@ -5,20 +5,27 @@ on:
     branches:
       - master
       - dev
+  pull_request:
+    types: [opened, reopened]
+    branches:
+      - master
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
         zig: [ 0.12.0, master ]
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     name: Zig ${{ matrix.zig }} on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - name: Setup Zig
-        uses: korandoru/setup-zig@v1
+      - uses: cachix/install-nix-action@v19
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.13.3/install
+          nix_path: nixpkgs=channel:nixos-unstable
+      - uses: korandoru/setup-zig@v1
         with:
           zig-version: ${{ matrix.zig }}
-      - run: make test-img
-      - run: zig build
+      - run: nix develop -c zig build
