@@ -12,12 +12,14 @@ void _start() {
   putch('L');
   putch('L');
   putch('O');
+  putch('!');
   putch(' ');
   putch('R');
   putch('I');
   putch('S');
   putch('C');
   putch('V');
+  putch('!');
   putch('\n');
   halt(0);
 }
