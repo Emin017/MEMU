@@ -15,6 +15,8 @@ const word_t = isa.word_t;
 const testing = std.testing;
 const expect = std.testing.expect;
 const print = @import("../common.zig").print;
+const cpu = @import("./cpu.zig");
+const utils = @import("../util.zig");
 
 const DECODE_TYPE = enum {
     TYPE_I,
@@ -34,40 +36,63 @@ pub const Decode = struct {
     inst: u32,
 };
 
-fn BITSMASK(hi: u5, lo: u5) u32 {
-    return ((@as(u32, 1) << (hi - lo + 1)) - 1) << lo;
-}
+pub const TypeB = struct {
+    imm: u32,
+    rs1: u32,
+    rs2: u32,
+    rd: u32,
+};
 
-fn BITS(x: u32, hi: u5, lo: u5) u32 {
-    const mask = BITSMASK(hi, lo);
-    return (x & mask) >> @intCast(lo);
-}
+pub const TypeI = struct {
+    imm: u32,
+    rs1: u32,
+    rd: u32,
+    pub fn decode(inst: u32) TypeI {
+        const imm: u32 = utils.BITS(inst, 31, 20);
+        const rs1: u32 = utils.BITS(inst, 19, 15);
+        const rd: u32 = utils.BITS(inst, 11, 7);
+        return TypeI{
+            .imm = imm,
+            .rs1 = rs1,
+            .rd = rd,
+        };
+    }
+    pub fn Operand(funct3: u32) !Operand {
+        return switch (funct3) {
+            0 => Operand.addi,
+            else => unreachable,
+        };
+    }
+};
 
-pub fn decode_operand(s: *Decode, dest: *word_t, src1: *word_t, src2: *word_t, inst_type: *word_t, imm: *word_t) void {
-    const i: u32 = s.*.inst;
-    const rd: u32 = BITS(i, 11, 7);
-    const rs1: u32 = BITS(i, 19, 15);
-    const rs2: u32 = BITS(i, 24, 20);
-    const opcode: u32 = BITS(i, 6, 0);
-    const imm_i: u32 = BITS(i, 31, 20);
-    dest.* = rd;
-    src1.* = rs1;
-    src2.* = rs2;
-    inst_type.* = opcode;
-    imm.* = imm_i;
-}
+pub const TypeEnv = struct {
+    ebreak: u32,
+    ret: u64,
+    halt: u32,
+    const inst_ebreak: u32 = 0b00000000000100000000000001110011;
+    pub fn decode(inst: u32) TypeEnv {
+        // Halt emu when is ebreak
+        if (inst == inst_ebreak) {
+            if (cpu.GPRs(10) == 1) return TypeEnv{ .ebreak = 1, .ret = cpu.GPRs(10), .halt = 1 } else return TypeEnv{ .ebreak = 1, .ret = cpu.GPRs(10), .halt = 0 };
+        }
+        return TypeEnv{ .ebreak = 0, .ret = cpu.GPRs(10), .halt = 0 };
+    }
+};
 
-test "decode_operand" {
-    var s: Decode = undefined;
-    s.inst = 0x00000033;
-    var dest: word_t = undefined;
-    var src1: word_t = undefined;
-    var src2: word_t = undefined;
-    var opcode: word_t = undefined;
-    decode_operand(&s, &dest, &src1, &src2, &opcode);
-    print("dest: {}, src1: {}, src2: {}, opcode: {}\n", .{ dest, src1, src2, opcode });
-    try testing.expect(dest == 0);
-    try testing.expect(src1 == 0);
-    try testing.expect(src2 == 0);
-    try testing.expect(opcode == 51);
-}
+pub const Instruction = union(enum) {
+    addi: TypeI,
+    ebreak: TypeEnv,
+
+    pub fn DecodePattern(op: anytype, val: anytype) Instruction {
+        return @unionInit(Instruction, @tagName(op), val); // Return the union with the tag name of the operation and the value
+    }
+
+    pub fn decode32(inst: u32) anyerror!Instruction {
+        const opcode: u32 = utils.BITS(inst, 6, 0);
+        return switch (opcode) {
+            0b0010011 => DecodePattern(.addi, TypeI.decode(inst)),
+            0b1110011 => DecodePattern(.ebreak, TypeEnv.decode(inst)),
+            else => unreachable,
+        };
+    }
+};

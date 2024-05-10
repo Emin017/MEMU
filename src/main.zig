@@ -10,7 +10,7 @@
 
 const std = @import("std");
 const c = @import("cpu/cpu.zig");
-const halt = @import("cpu/exu.zig").isHalt;
+const halt = @import("cpu/exu.zig").ishalt;
 const initMemory = @import("mem.zig").initMem;
 
 pub const reg_display = @import("cpu/reg.zig").reg_display;

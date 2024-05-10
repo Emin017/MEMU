@@ -15,3 +15,16 @@ pub const print = std.debug.print;
 pub fn putchar(c: u8) void {
     std.os.write(std.os.Stdout, &c, 1);
 }
+
+pub inline fn CONCACT(a: u32, b: u32) u64 {
+    return @intCast(a << 32 | b);
+}
+
+pub fn BITSMASK(hi: u5, lo: u5) u32 {
+    return ((@as(u32, 1) << (hi - lo + 1)) - 1) << lo;
+}
+
+pub fn BITS(x: u32, hi: u5, lo: u5) u32 {
+    const mask = BITSMASK(hi, lo);
+    return (x & mask) >> @intCast(lo);
+}
