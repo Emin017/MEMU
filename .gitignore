@@ -1,3 +1,4 @@
+.direnv
 # zig build output
 zig-out/
 zig-cache/
