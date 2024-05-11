@@ -17,6 +17,7 @@ pub const MEM = struct {
     pub var memory = std.mem.zeroes([size]u8);
 
     pub fn paddr(addr: u64) u64 {
+        std.debug.print("addr:{x}\n", .{addr});
         return addr - base;
     }
 
@@ -35,7 +36,7 @@ pub const MEM = struct {
     }
 };
 
-const filePath = "imgfile/dummy-riscv64-npc.bin";
+const filePath = "imgfile/dummy.bin";
 
 pub fn initMem() void {
     const memSlice: []u8 = MEM.memory[0..];
