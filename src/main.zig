@@ -11,21 +11,28 @@
 const std = @import("std");
 const c = @import("cpu/cpu.zig");
 const halt = @import("cpu/exu.zig").ishalt;
+const check = @import("cpu/exu.zig").check;
 const initMemory = @import("mem.zig").initMem;
 
-pub const reg_display = @import("cpu/reg.zig").reg_display;
-pub const inst_cycle = @import("cpu/exu.zig").exu_cycle;
+pub const displayReg = @import("cpu/reg.zig").displayReg;
+pub const cycle = @import("cpu/exu.zig").execute;
 
 pub fn main() anyerror!void {
     c.cpu.pc = 0x80000000;
     initMemory();
     while (!halt()) {
-        inst_cycle() catch |err| {
+        c.cpu.dnpc = c.cpu.pc + 4;
+        cycle() catch |err| {
             std.debug.print("Error in instruction cycle !\n", .{});
             std.debug.print("Error TYPE ID: {}\n", .{err});
             break;
         };
-        c.cpu.pc += 4;
+        c.cpu.pc = c.cpu.dnpc;
     }
-    reg_display();
+    if (check()) {
+        std.debug.print("Program executed successfully !\n", .{});
+    } else {
+        std.debug.print("Program execution failed !\n", .{});
+    }
+    displayReg();
 }

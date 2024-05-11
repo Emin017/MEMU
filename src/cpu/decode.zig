@@ -28,11 +28,14 @@ pub const Decode = struct {
     inst: u32,
 };
 
-pub const TypeB = struct {
-    imm: u32,
+pub const TypeR = struct {
     rs1: u32,
     rs2: u32,
     rd: u32,
+    pub fn decode(inst: u32) TypeR {
+        _ = inst;
+        return TypeR{ .rs1 = 0, .rs2 = 0, .rd = 0 };
+    }
 };
 
 pub const TypeI = struct {
@@ -49,10 +52,56 @@ pub const TypeI = struct {
             .rd = rd,
         };
     }
-    pub fn Operand(funct3: u32) !Operand {
-        return switch (funct3) {
-            0 => Operand.addi,
-            else => unreachable,
+};
+
+pub const TypeS = struct {
+    imm: u32,
+    rs1: u32,
+    rs2: u32,
+    rd: u32,
+    pub fn decode(inst: u32) TypeS {
+        const imm: u32 = utils.BITS(inst, 31, 25) << 5 | utils.BITS(inst, 11, 7);
+        const rs1: u32 = utils.BITS(inst, 19, 15);
+        const rs2: u32 = utils.BITS(inst, 24, 20);
+        const rd: u32 = utils.BITS(inst, 11, 7);
+        return TypeS{
+            .imm = imm,
+            .rs1 = rs1,
+            .rs2 = rs2,
+            .rd = rd,
+        };
+    }
+};
+
+pub const TypeB = struct {
+    imm: u32,
+    rs1: u32,
+    rs2: u32,
+    rd: u32,
+};
+
+pub const TypeU = struct {
+    imm: u32,
+    rd: u32,
+    pub fn decode(inst: u32) TypeU {
+        const imm: u32 = utils.BITS(inst, 31, 12);
+        const rd: u32 = utils.BITS(inst, 11, 7);
+        return TypeU{
+            .imm = imm,
+            .rd = rd,
+        };
+    }
+};
+
+pub const TypeJ = struct {
+    imm: u32,
+    rd: u32,
+    pub fn decode(inst: u32) TypeJ {
+        const imm: u32 = utils.BITS(inst, 31, 31) << 20 | utils.BITS(inst, 19, 12) << 12 | utils.BITS(inst, 20, 20) << 11 | utils.BITS(inst, 30, 21) << 1;
+        const rd: u32 = utils.BITS(inst, 11, 7);
+        return TypeJ{
+            .imm = imm,
+            .rd = rd,
         };
     }
 };
@@ -72,7 +121,15 @@ pub const TypeEnv = struct {
 };
 
 pub const Instruction = union(enum) {
+    auipc: TypeU,
+    jal: TypeJ,
+    jalr: TypeI,
+    add: TypeR,
     addi: TypeI,
+
+    ld: TypeI,
+    sd: TypeS,
+
     ebreak: TypeEnv,
 
     pub fn DecodePattern(op: anytype, val: anytype) Instruction {
@@ -82,8 +139,42 @@ pub const Instruction = union(enum) {
     pub fn decode32(inst: u32) anyerror!Instruction {
         const opcode: u32 = utils.BITS(inst, 6, 0);
         return switch (opcode) {
-            0b0010011 => DecodePattern(.addi, TypeI.decode(inst)),
+            0b0110011 => aluOp(inst),
+            0b0010011 => aluOpImm(inst),
             0b1110011 => DecodePattern(.ebreak, TypeEnv.decode(inst)),
+            0b0100011 => storeOp(inst),
+            0b0000011 => loadOp(inst),
+            0b1101111 => DecodePattern(.jal, TypeJ.decode(inst)),
+            0b1100111 => DecodePattern(.jalr, TypeI.decode(inst)),
+            0b0010111 => DecodePattern(.auipc, TypeU.decode(inst)),
+            else => decodeError.InvalidInstruction,
+        };
+    }
+    pub fn aluOp(inst: u32) anyerror!Instruction {
+        const funct3andfunct7: u32 = utils.BITS(inst, 31, 25) << 3 | utils.BITS(inst, 14, 12);
+        return switch (funct3andfunct7) {
+            utils.CONACT(0b000, 0b0000000) => DecodePattern(.add, TypeR.decode(inst)),
+            else => decodeError.InvalidInstruction,
+        };
+    }
+    pub fn aluOpImm(inst: u32) anyerror!Instruction {
+        const funct3: u32 = utils.BITS(inst, 14, 12);
+        return switch (funct3) {
+            0b000 => DecodePattern(.addi, TypeI.decode(inst)),
+            else => decodeError.InvalidInstruction,
+        };
+    }
+    pub fn loadOp(inst: u32) anyerror!Instruction {
+        const funct3: u32 = utils.BITS(inst, 14, 12);
+        return switch (funct3) {
+            0b011 => DecodePattern(.ld, TypeI.decode(inst)),
+            else => decodeError.InvalidInstruction,
+        };
+    }
+    pub fn storeOp(inst: u32) anyerror!Instruction {
+        const funct3: u32 = utils.BITS(inst, 14, 12);
+        return switch (funct3) {
+            0b011 => DecodePattern(.sd, TypeS.decode(inst)),
             else => decodeError.InvalidInstruction,
         };
     }

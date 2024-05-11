@@ -15,12 +15,27 @@ pub const MEM = struct {
     pub const size = 0x8000000;
     pub const img: [28]u8 = [_]u8{ 0x13, 0x05, 0x00, 0x00, 0x93, 0x05, 0x10, 0x04, 0x73, 0x00, 0x10, 0x00, 0x13, 0x05, 0x10, 0x00, 0x93, 0x05, 0x00, 0x00, 0x73, 0x00, 0x10, 0x00, 0x6f, 0x00, 0x00, 0x00 };
     pub var memory = std.mem.zeroes([size]u8);
+
+    pub fn paddr(addr: u64) u64 {
+        return addr - base;
+    }
+
     pub fn read(addr: u64) u32 {
-        return @as(u32, memory[addr][0..4]);
+        //TODO: implement read
+        _ = addr;
+        return 0;
+    }
+
+    pub fn write(addr: u64, data: u64) void {
+        std.debug.print("writing to Mem addr: {x} data:{x}\n", .{ addr, data });
+        const memSlice: []u8 = MEM.memory[0..];
+        var value: u64 = data;
+        const b: *[@sizeOf(@TypeOf(value))]u8 = @ptrCast(&value);
+        std.mem.copyForwards(u8, memSlice[paddr(addr)..], b);
     }
 };
 
-const filePath = "imgfile/prog.bin";
+const filePath = "imgfile/dummy-riscv64-npc.bin";
 
 pub fn initMem() void {
     const memSlice: []u8 = MEM.memory[0..];

@@ -20,6 +20,7 @@ pub const CPU_ERROR = error{
 pub const CPU_STATE = struct {
     const Self = @This();
     pc: u64,
+    dnpc: u64,
     gprs: [32]u64 = [_]u64{},
     pub fn init() !Self {
         Self.pc = 0;

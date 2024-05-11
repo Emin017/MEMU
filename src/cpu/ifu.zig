@@ -12,16 +12,13 @@ const std = @import("std");
 const vaddr = @import("../arch/rv64.zig").vaddr;
 pub const Mem = @import("../mem.zig").MEM;
 
-pub fn paddr(addr: u64) u64 {
-    return addr - Mem.base;
-}
-
-pub fn inst_fetch(pc: u64, M: *const [Mem.size]u8) u32 {
-    const addr = paddr(pc);
-    const inst_ptr = M[addr .. addr + 4];
+pub fn instfetch(pc: u64, M: *const [Mem.size]u8) u32 {
+    const addr = Mem.paddr(pc);
+    const t = M[addr .. addr + 4];
     var inst: u32 = 0;
-    for (inst_ptr, 0..) |ptr, i| {
+    for (t, 0..) |ptr, i| {
         inst += @as(u32, ptr) << @intCast(i * 8);
     }
+    std.debug.print("pc:{x} inst:{x}\n", .{ pc, inst });
     return inst;
 }

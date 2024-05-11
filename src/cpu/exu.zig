@@ -18,28 +18,37 @@ const print = @import("../util.zig").print;
 const ifu = @import("ifu.zig");
 const isa = @import("../arch/rv64.zig");
 
-var halt = false;
+const state = struct {
+    halt: bool,
+    good: bool,
+};
+var cpuState = state{ .halt = false, .good = false };
 
-pub fn exu_cycle() anyerror!void {
-    const inst: u32 = ifu.inst_fetch(c.cpu.pc, &M.memory);
+pub fn execute() anyerror!void {
+    const inst: u32 = ifu.instfetch(c.cpu.pc, &M.memory);
     const inst_test: ?decode.Instruction = decode.Instruction.decode32(inst) catch |err| {
         std.debug.print("Unknown instruction: {x}\n", .{inst});
         return err;
     };
-    const exu = isa.inst2exu(inst_test.?);
-    const ret = exu(inst_test.?);
+    const step = isa.step(inst_test.?);
+    const ret = step(inst_test.?);
     _ = ret;
 }
 
 pub fn ishalt() bool {
-    return halt;
+    return cpuState.halt;
+}
+
+pub fn check() bool {
+    return cpuState.good;
 }
 
 pub fn setState(x: bool) void {
     if (x) {
-        halt = true;
+        cpuState.good = true;
     } else {
-        halt = false;
+        cpuState.good = false;
     }
+    cpuState.halt = true;
     return;
 }
