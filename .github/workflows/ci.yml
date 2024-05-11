@@ -24,7 +24,4 @@ jobs:
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.3/install
           nix_path: nixpkgs=channel:nixos-unstable
-      # - uses: korandoru/setup-zig@v1
-        with:
-          zig-version: ${{ matrix.zig }}
       - run: nix develop -c zig build
