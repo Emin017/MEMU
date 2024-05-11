@@ -18,17 +18,9 @@ const print = @import("../common.zig").print;
 const cpu = @import("./cpu.zig");
 const utils = @import("../util.zig");
 
-const DECODE_TYPE = enum {
-    TYPE_I,
-    TYPE_U,
-    TYPE_S,
-    TYPE_J,
-    TYPE_R,
-    TYPE_B,
-    TYPE_C,
-    TYPE_N,
+pub const decodeError = error{
+    InvalidInstruction,
 };
-
 pub const Decode = struct {
     pc: vaddr_t,
     snpc: vaddr_t, // static next pc
@@ -92,7 +84,7 @@ pub const Instruction = union(enum) {
         return switch (opcode) {
             0b0010011 => DecodePattern(.addi, TypeI.decode(inst)),
             0b1110011 => DecodePattern(.ebreak, TypeEnv.decode(inst)),
-            else => unreachable,
+            else => decodeError.InvalidInstruction,
         };
     }
 };

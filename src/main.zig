@@ -16,13 +16,15 @@ const initMemory = @import("mem.zig").initMem;
 pub const reg_display = @import("cpu/reg.zig").reg_display;
 pub const inst_cycle = @import("cpu/exu.zig").exu_cycle;
 
-comptime {}
-
-pub fn main() void {
-    c.cpu.pc = 0;
+pub fn main() anyerror!void {
+    c.cpu.pc = 0x80000000;
     initMemory();
     while (!halt()) {
-        inst_cycle();
+        inst_cycle() catch |err| {
+            std.debug.print("Error in instruction cycle !\n", .{});
+            std.debug.print("Error TYPE ID: {}\n", .{err});
+            break;
+        };
         c.cpu.pc += 4;
     }
     reg_display();

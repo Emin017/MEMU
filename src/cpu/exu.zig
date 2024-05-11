@@ -20,12 +20,11 @@ const isa = @import("../arch/rv64.zig");
 
 var halt = false;
 
-pub fn exu_cycle() void {
+pub fn exu_cycle() anyerror!void {
     const inst: u32 = ifu.inst_fetch(c.cpu.pc, &M.memory);
-    var failed: anyerror = undefined;
     const inst_test: ?decode.Instruction = decode.Instruction.decode32(inst) catch |err| {
-        failed = err;
-        return;
+        std.debug.print("Unknown instruction: {x}\n", .{inst});
+        return err;
     };
     const exu = isa.inst2exu(inst_test.?);
     const ret = exu(inst_test.?);
