@@ -13,7 +13,7 @@ BUILD_DIR ?= zig-out
 BIN_DIR ?= $(BUILD_DIR)/bin
 
 build:
-	zig build
+	zig build -j`nproc` -Doptimize=ReleaseFast
 
 test-img:
 	$(MAKE) -C $(IMG_DIR) compile
